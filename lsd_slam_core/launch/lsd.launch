@@ -1,0 +1,46 @@
+<launch>
+   	<node pkg="rosbag" type="play" name="player1"  args="/home/alphabot/niv/datasets/IRT/loop_big_square1.bag">
+			<remap from="imageRectified" to="lsd1/imageRectified" />
+	    	<remap from="camInfo" to="lsd1/camInfo" />
+	    	<remap from="camera/image_raw" to="lsd1/camera/image_raw" />
+	</node> 
+
+
+	 
+	<group ns="lsd1">
+		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<remap from="image" to="imageRectified" />
+	        <remap from="camera_info" to="camInfo" />
+		</node>	
+
+		<!--		
+		<node pkg="rosbag" type="play" name="player"  args="/home/alphabot/niv/datasets/IRT/loop_big_square1.bag">
+			<remap from="/imageRectified" to="imageRectified" />
+	    	<remap from="/camInfo" to="camInfo" />
+	    	<remap from="/camera/image_raw" to="camera/image_raw" />
+		</node> -->
+	</group> 
+
+
+	<node pkg="rosbag" type="play" name="player2"  args="/home/alphabot/niv/datasets/IRT/loop_big_square2.bag">
+			<remap from="imageRectified" to="lsd2/imageRectified" />
+	    	<remap from="camInfo" to="lsd2/camInfo" />
+	    	<remap from="camera/image_raw" to="lsd2/camera/image_raw" />
+	</node>
+	
+	<group ns="lsd2">
+		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<remap from="image" to="imageRectified" />
+	        <remap from="camera_info" to="camInfo" />
+		</node>	
+		<!--
+		<node pkg="rosbag" type="play" name="player"  args="/home/alphabot/niv/datasets/IRT/loop_big_square2.bag">
+			<remap from="/imageRectified" to="imageRectified" />
+	    	<remap from="/camInfo" to="camInfo" />
+	    	<remap from="/camera/image_raw" to="camera/image_raw" />
+		</node> -->
+	</group>  
+	
+
+		 
+</launch>

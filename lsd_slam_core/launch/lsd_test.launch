@@ -1,0 +1,59 @@
+<launch>
+   <!--	<node pkg="rosbag" type="play" name="player1"  args="/home/alphabot/niv/datasets/IRT/loop_big_square1.bag">
+			<remap from="imageRectified" to="lsd1/imageRectified" />
+	    	<remap from="camInfo" to="lsd1/camInfo" />
+	    	<remap from="camera/image_raw" to="lsd1/camera/image_raw" />
+	</node> --> 
+
+
+	 
+	<group ns="lsd1">
+		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<remap from="image" to="imageRectified1" />
+	        <remap from="camera_info" to="camInfo1" />
+		</node>	
+
+			
+		<node pkg="rosbag" type="play" name="player"  args="/home/alphabot/niv/datasets/IRT/loop_big_square1.bag">
+			<remap from="/imageRectified" to="imageRectified1" />
+	    	<remap from="/camInfo" to="camInfo1" />
+	    	<remap from="/camera/image_raw" to="camera/image_raw1" />
+		</node> 
+	</group> 
+
+
+	<!-- <node pkg="rosbag" type="play" name="player2"  args="/home/alphabot/niv/datasets/IRT/loop_big_square2.bag">
+			<remap from="imageRectified" to="lsd2/imageRectified2" />
+	    	<remap from="camInfo" to="lsd2/camInfo2" />
+	    	<remap from="camera/image_raw" to="lsd2/camera/image_raw2" />
+	</node> -->
+	
+	<group ns="lsd2">
+		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<remap from="image" to="imageRectified2" />
+	        <remap from="camera_info" to="camInfo2" />
+		</node>	
+		
+		<node pkg="rosbag" type="play" name="player"  args="/home/alphabot/niv/datasets/IRT/loop_big_square2.bag">
+			<remap from="/imageRectified" to="imageRectified2" />
+	    	<remap from="/camInfo" to="camInfo2" />
+	    	<remap from="/camera/image_raw" to="camera/image_raw2" />
+		</node>
+	</group>  
+
+
+	<node name="viewer1" pkg="lsd_slam_viewer" type="viewer" output="screen">
+			<remap from="/lsd_slam/liveframes" to="/lsd1/lsd_slam/liveframes" />
+	        <remap from="/lsd_slam/keyframes" to="/lsd1/lsd_slam/keyframes" />
+	        <remap from="/lsd_slam/graph" to="/lsd1/lsd_slam/graph" />
+	</node>	
+	
+   	<node name="viewer2" pkg="lsd_slam_viewer" type="viewer" output="screen">
+			<remap from="/lsd_slam/liveframes" to="/lsd2/lsd_slam/liveframes" />
+	        <remap from="/lsd_slam/keyframes" to="/lsd2/lsd_slam/keyframes" />
+	        <remap from="/lsd_slam/graph" to="/lsd2/lsd_slam/graph" />
+	</node>
+	
+
+		 
+</launch>
