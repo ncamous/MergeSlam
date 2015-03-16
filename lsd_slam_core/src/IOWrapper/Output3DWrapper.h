@@ -55,7 +55,7 @@ public:
 	virtual void publishKeyframe(Frame* kf) {};
 	
 	//publishes keyframe along with images
-	virtual void publishKeyframeImg(Frame* kf) {};
+	//virtual void publishKeyframeImg(Frame* kf) {};
 	
 	// published a tracked frame that did not become a keyframe (yet; i.e. has no depth data)
 	virtual void publishTrackedFrame(Frame* kf) {};
