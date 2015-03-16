@@ -12,3 +12,5 @@ TO DO LIST:
 3) Camera Related Issues:
     i) Software controller to deal with change in illumination problem.
     ii) Homography for distorted images using fish eye lens.
+
+4) Add dm.cpp temporal
