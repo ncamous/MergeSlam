@@ -1,4 +1,6 @@
 TO DO LIST:
+0)	Extract Keyframe(Images) from LSD-SLAM and publish them in a topic.
+
 1)  Detect Keyframe overlap between two cameras:
     i) Brute Force Method (Compare keyframes in stack).
     ii) Using Open FAB Map framework
@@ -12,5 +14,3 @@ TO DO LIST:
 3) Camera Related Issues:
     i) Software controller to deal with change in illumination problem.
     ii) Homography for distorted images using fish eye lens.
-
-4) Add dm.cpp temporal
