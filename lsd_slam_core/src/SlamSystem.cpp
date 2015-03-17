@@ -487,6 +487,10 @@ void SlamSystem::createNewCurrentKeyframe(std::shared_ptr<Frame> newKeyframeCand
 	currentKeyFrameMutex.lock();
 	currentKeyFrame = newKeyframeCandidate;
 	currentKeyFrameMutex.unlock();
+	
+	if(outputWrapper!= 0)
+		outputWrapper->publishKeyframeImg(currentKeyFrame.get());
+	
 }
 void SlamSystem::loadNewCurrentKeyframe(Frame* keyframeToLoad)
 {

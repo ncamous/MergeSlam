@@ -22,6 +22,10 @@
 
 #include <ros/ros.h>
 #include "IOWrapper/Output3DWrapper.h"
+#include <opencv2/core/core.hpp>
+#include "IOWrapper/ImageDisplay.h"
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 
 namespace lsd_slam
@@ -68,7 +72,7 @@ public:
 	virtual void publishKeyframe(Frame* f);
 	
 	//publishes keyframe along with images
-	//virtual void publishKeyframeImg(Frame* kf) {};
+	virtual void publishKeyframeImg(Frame* kf);
 
 	// published a tracked frame that did not become a keyframe (i.e. has no depth data)
 	virtual void publishTrackedFrame(Frame* f);
@@ -91,6 +95,10 @@ private:
 
 	std::string keyframe_channel;
 	ros::Publisher keyframe_publisher;
+	
+	std::string keyframeImg_channel;
+	ros::Publisher keyframeImg_publisher;
+	
 
 	std::string graph_channel;
 	ros::Publisher graph_publisher;

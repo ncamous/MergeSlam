@@ -32,6 +32,9 @@
 #include "GlobalMapping/KeyFrameGraph.h"
 #include "sophus/sim3.hpp"
 #include "geometry_msgs/PoseStamped.h"
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/fill_image.h>
+#include <sensor_msgs/image_encodings.h>
 #include "GlobalMapping/g2oTypeSim3Sophus.h"
 
 namespace lsd_slam
@@ -48,6 +51,9 @@ ROSOutput3DWrapper::ROSOutput3DWrapper(int width, int height)
 
 	keyframe_channel = nh_.resolveName("lsd_slam/keyframes");
 	keyframe_publisher = nh_.advertise<lsd_slam_viewer::keyframeMsg>(keyframe_channel,1);
+
+	keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
+	keyframeImg_publisher = nh_.advertise<sensor_msgs::Image>(keyframeImg_channel,1);
 
 	graph_channel = nh_.resolveName("lsd_slam/graph");
 	graph_publisher = nh_.advertise<lsd_slam_viewer::keyframeGraphMsg>(graph_channel,1);
@@ -111,12 +117,26 @@ void ROSOutput3DWrapper::publishKeyframe(Frame* f)
 	keyframe_publisher.publish(fMsg);
 }
 
+void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
+{	
+	// Convert image to ROS sensor_msgs/Image and publish
+	// Missing unique id
+	cv_bridge::CvImage tmp_img;
+	boost::shared_lock<boost::shared_mutex> lock = f->getActiveLock();
+	cv::Mat kfImgCV(f->height(), f->width(), CV_32F, const_cast<float*>(f->image()));
+	kfImgCV.convertTo(kfImgCV, CV_8UC1);
+	// Display image in openCV window (For debugging)
+	Util::displayImage("Keyframe Image OpenCV", const_cast<float*>(f->image()), f->width(), f->height());
+	tmp_img.encoding = sensor_msgs::image_encodings::MONO8; // Or whatever
+	tmp_img.image    = kfImgCV; // Your cv::Mat
+	keyframeImg_publisher.publish(tmp_img.toImageMsg());
+	
+}
 
 
 void ROSOutput3DWrapper::publishTrackedFrame(Frame* kf)
 {
 	lsd_slam_viewer::keyframeMsg fMsg;
-
 
 	fMsg.id = kf->id();
 	fMsg.time = kf->timestamp();
