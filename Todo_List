@@ -1,0 +1,16 @@
+TO DO LIST:
+1)  Detect Keyframe overlap between two cameras:
+    i) Brute Force Method (Compare keyframes in stack).
+    ii) Using Open FAB Map framework
+    iii) Uding ORB Features
+    iv) Other Features (BRISK etc)
+
+2) Merge map on overlap detection:
+    i) Compute relative localization on overlap detection
+    ii) Display merged map in a single viewer
+
+3) Camera Related Issues:
+    i) Software controller to deal with change in illumination problem.
+    ii) Homography for distorted images using fish eye lens.
+
+4) Add dm.cpp temporal
