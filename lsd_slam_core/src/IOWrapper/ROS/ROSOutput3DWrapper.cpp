@@ -130,7 +130,8 @@ void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 	tmp_img.encoding = sensor_msgs::image_encodings::MONO8; // Or whatever
 	tmp_img.image    = kfImgCV; // Your cv::Mat
 	keyframeImg_publisher.publish(tmp_img.toImageMsg());
-	
+
+  
 }
 
 

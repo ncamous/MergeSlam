@@ -1,5 +1,5 @@
 TO DO LIST:
-0)	Extract Keyframe(Images) from LSD-SLAM and publish them in a topic.
+0)	~~Extract Keyframe(Images) from LSD-SLAM and publish them in a topic.~~ Done 
 
 1)  Detect Keyframe overlap between two cameras:
     i) Brute Force Method (Compare keyframes in stack).
