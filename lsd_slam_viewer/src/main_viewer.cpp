@@ -103,8 +103,8 @@ void rosThreadLoop( int argc, char** argv )
 	*/
 
 	ros::Subscriber liveFrames_sub = nh.subscribe("lsd_slam/liveframes",1, frameCb);
-    ros::Subscriber keyFrames_sub = nh.subscribe("lsd_slam/keyframes",20, frameCb);
-    ros::Subscriber graph_sub       = nh.subscribe("lsd_slam/graph",10, graphCb);
+	ros::Subscriber keyFrames_sub = nh.subscribe("lsd_slam/keyframes",20, frameCb);
+	ros::Subscriber graph_sub       = nh.subscribe("lsd_slam/graph",10, graphCb);
 
 	ros::spin();
 
