@@ -42,7 +42,7 @@ set(CMAKE_CXX_FLAGS
    "${CMAKE_CXX_FLAGS} -march=native -Wall -std=c++0x"
 )
 
-add_message_files(DIRECTORY msg FILES keyframeMsg.msg keyframeGraphMsg.msg keyframeImg.msg)
+add_message_files(DIRECTORY msg FILES keyframeMsg.msg keyframeGraphMsg.msg)
 generate_messages(DEPENDENCIES sensor_msgs)
 
 generate_dynamic_reconfigure_options(
