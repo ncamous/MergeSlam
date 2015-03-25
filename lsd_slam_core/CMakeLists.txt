@@ -17,12 +17,13 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   roscpp
   rosbag
-)
+  )
 
 find_package(Eigen REQUIRED)
 find_package(X11 REQUIRED)
 include(cmake/FindG2O.cmake)
 include(cmake/FindSuiteParse.cmake)
+
 
 message("-- CHOLMOD_INCLUDE_DIR : " ${CHOLMOD_INCLUDE_DIR})
 message("-- CSPARSE_INCLUDE_DIR : " ${CSPARSE_INCLUDE_DIR})
@@ -30,10 +31,10 @@ message("-- G2O_INCLUDE_DIR : " ${G2O_INCLUDE_DIR})
 
 # FabMap
 # uncomment this part to enable fabmap
-#add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap)
-#include_directories(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap/include)
-#add_definitions("-DHAVE_FABMAP")
-#set(FABMAP_LIB openFABMAP )
+add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap/include)
+add_definitions("-DHAVE_FABMAP")
+set(FABMAP_LIB openFABMAP )
 
 generate_dynamic_reconfigure_options(
   cfg/LSDDebugParams.cfg
@@ -43,7 +44,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   LIBRARIES lsdslam
   DEPENDS Eigen SuiteSparse
-  CATKIN_DEPENDS libg2o 
+  CATKIN_DEPENDS libg2o lsd_slam_viewer place_recognizer
 )
 
 # SSE flags
@@ -99,7 +100,6 @@ include_directories(
 # build shared library.
 add_library(lsdslam SHARED ${SOURCE_FILES})
 target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES} csparse cxsparse X11)
-#rosbuild_link_boost(lsdslam thread)
 
 
 # build live ros node
