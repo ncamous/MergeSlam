@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 2.6)
 ############ Cmake setup ##################
 
 # tell cmake where the FindXXX.cmake functions are
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
 
 # # make a lib directory in the build directory
 # file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -44,26 +44,30 @@ ADD_LIBRARY(openFABMAP SHARED ${OPENFABMAP_FILES} ${OPENFABMAP_INCS})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Link against the required libraries in OpenCV >=2.2
-IF(OPENCV2_FOUND)
-    SET( OPENCV2_INSTALLED 1)
+#IF(OPENCV2_FOUND)
+#    SET( OPENCV2_INSTALLED 1)
 #     message( STATUS "Using OpenCV >= 2.2" )
-	IF(WIN32)
-		IF(MINGW)
-			TARGET_LINK_LIBRARIES(openFABMAP ${OPENCV2_LIBS})
-		ELSE(MINGW)
-			FOREACH (LIB ${OPENCV2_DEBUG_LIBS})
-				TARGET_LINK_LIBRARIES(openFABMAP
-				debug ${LIB})
-			ENDFOREACH(LIB)
-			FOREACH (LIB ${OPENCV2_RELEASE_LIBS})
-				TARGET_LINK_LIBRARIES(openFABMAP
-				optimized ${LIB})
-			ENDFOREACH(LIB)
-		ENDIF(MINGW)
-	ELSE(WIN32)
-		TARGET_LINK_LIBRARIES(openFABMAP opencv_highgui opencv_core opencv_features2d opencv_imgproc opencv_nonfree)
-	ENDIF(WIN32)
-ENDIF(OPENCV2_FOUND)
+#	IF(WIN32)
+#		IF(MINGW)
+#			TARGET_LINK_LIBRARIES(openFABMAP ${OPENCV2_LIBS})
+#		ELSE(MINGW)
+#			FOREACH (LIB ${OPENCV2_DEBUG_LIBS})
+#				TARGET_LINK_LIBRARIES(openFABMAP
+#				debug ${LIB})
+#			ENDFOREACH(LIB)
+#			FOREACH (LIB ${OPENCV2_RELEASE_LIBS})
+#				TARGET_LINK_LIBRARIES(openFABMAP
+#				optimized ${LIB})
+#			ENDFOREACH(LIB)
+#		ENDIF(MINGW)
+#	ELSE(WIN32)
+#		TARGET_LINK_LIBRARIES(openFABMAP opencv_highgui opencv_core opencv_features2d opencv_imgproc opencv_nonfree)
+#	ENDIF(WIN32)
+#ENDIF(OPENCV2_FOUND)
+
+#TARGET_LINK_LIBRARIES(openFABMAP opencv_highgui opencv_core opencv_features2d opencv_imgproc opencv_nonfree)
+message(OpenCV_LIBS : "${OpenCV_LIBS}")
+TARGET_LINK_LIBRARIES(openFABMAP ${OpenCV_LIBS})
 
 
 ############ openFABMAPcli executable ##################
