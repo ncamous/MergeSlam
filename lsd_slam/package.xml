@@ -15,7 +15,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>lsd_slam_core</run_depend>
   <run_depend>lsd_slam_viewer</run_depend>
-
+  <run_depend>place_recognizer</run_depend>
   <export>
     <metapackage/>
   </export>
