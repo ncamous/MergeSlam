@@ -27,6 +27,7 @@
 #include "std_msgs/Float32MultiArray.h"
 #include "lsd_slam_viewer/keyframeGraphMsg.h"
 #include "lsd_slam_viewer/keyframeMsg.h"
+#include "place_recognizer/keyframeImg.h"
 
 #include "DataStructures/Frame.h"
 #include "GlobalMapping/KeyFrameGraph.h"
@@ -52,8 +53,11 @@ ROSOutput3DWrapper::ROSOutput3DWrapper(int width, int height)
 	keyframe_channel = nh_.resolveName("lsd_slam/keyframes");
 	keyframe_publisher = nh_.advertise<lsd_slam_viewer::keyframeMsg>(keyframe_channel,1);
 
+	//keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
+	//keyframeImg_publisher = nh_.advertise<sensor_msgs::Image>(keyframeImg_channel,1);
+	
 	keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
-	keyframeImg_publisher = nh_.advertise<sensor_msgs::Image>(keyframeImg_channel,1);
+	keyframeImg_publisher = nh_.advertise<place_recognizer::keyframeImg>(keyframeImg_channel,1);
 
 	graph_channel = nh_.resolveName("lsd_slam/graph");
 	graph_publisher = nh_.advertise<lsd_slam_viewer::keyframeGraphMsg>(graph_channel,1);
@@ -119,19 +123,41 @@ void ROSOutput3DWrapper::publishKeyframe(Frame* f)
 
 void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 {	
+	/*
 	// Convert image to ROS sensor_msgs/Image and publish
-	// Missing unique id
+	//Add id num and other meta information
 	cv_bridge::CvImage tmp_img;
 	boost::shared_lock<boost::shared_mutex> lock = f->getActiveLock();
 	cv::Mat kfImgCV(f->height(), f->width(), CV_32F, const_cast<float*>(f->image()));
 	kfImgCV.convertTo(kfImgCV, CV_8UC1);
 	// Display image in openCV window (For debugging)
-	Util::displayImage("Keyframe Image OpenCV", const_cast<float*>(f->image()), f->width(), f->height());
+	//Util::displayImage("Keyframe Image OpenCV", const_cast<float*>(f->image()), f->width(), f->height());
 	tmp_img.encoding = sensor_msgs::image_encodings::MONO8; // Or whatever
 	tmp_img.image    = kfImgCV; // Your cv::Mat
-	keyframeImg_publisher.publish(tmp_img.toImageMsg());
-
-  
+	keyframeImg_publisher.publish(tmp_img.toImageMsg()); */
+	
+	
+	// Convert image to ROS sensor_msgs/Image, add image id etc and publish
+	cv_bridge::CvImage tmp_img;
+	sensor_msgs::Image fImg;
+	place_recognizer::keyframeImg fMsg;
+	boost::shared_lock<boost::shared_mutex> lock = f->getActiveLock();
+	
+	// Extract image from frame structure and covert into sensor_msgs/Image format
+	cv::Mat kfImgCV(f->height(), f->width(), CV_32F, const_cast<float*>(f->image()));
+	kfImgCV.convertTo(kfImgCV, CV_8UC1);
+	tmp_img.encoding = sensor_msgs::image_encodings::MONO8;
+	tmp_img.image    = kfImgCV;
+	tmp_img.toImageMsg(fImg);
+	
+	//Copy image id , timestamp and keyframe image to msg and publish  
+	fMsg.id = f->id();
+	fMsg.time = f->timestamp();
+	fMsg.img = fImg; 
+	
+	// Publish keyframeImg message
+	keyframeImg_publisher.publish(fMsg); 
+ 
 }
 
 
