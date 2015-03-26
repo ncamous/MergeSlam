@@ -1,4 +1,0 @@
-bool isMatch		#True if match found
-double matchProb	#Matching probability
-int32 kfId1			#Keyframe id for camera 1
-int32 kfId2			#Keyframe id for camera 2
