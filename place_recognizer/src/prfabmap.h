@@ -24,9 +24,9 @@ public:
   PRfabmap(); 	// Initializes FabMap by loading vocabulary, training data etc
   ~PRfabmap();  // Prints the confusion matrix to file before exiting;
  
- void addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camID); // Computes BOW for each new keyframe and stores it
- void compareKeyframeBOW(); // Compares BOW from two cameras and finds potential overlap
- void publishMatchInfo(cv::Mat& matchMat); // if match is found it publishes on a topic
+ void addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camId); // Computes BOW for each new keyframe and stores it
+ void compareKeyframeBOW(cv::Mat bow,int camId); // Compares BOW from two cameras and finds potential overlap.  
+ void publishMatchInfo(cv::Mat matchMat , int camId, int fId); // if match is found it publishes on a topic
  //void computeConfusionMat(); // For debugging
  bool isValid() const; // Returns if the class is initialized correctly (i.e. if the required files coul be loaded). 
   

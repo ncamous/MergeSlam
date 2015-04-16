@@ -101,7 +101,7 @@ PRfabmap::~PRfabmap()
  
 }
 
-void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camID)
+void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camId)
 {
   // Convert to cv::Mat using cv_bridge
   cv_bridge::CvImagePtr cv_ptr; 
@@ -128,21 +128,30 @@ void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camI
   
   // Temporary implementation for two cameras. (Replace with vector later)
   cv::Mat bow;
-  if(camID==1){
+  if(camId==1){
     bide->compute(frame, kpts, bow);
     bow1.push_back(bow);
     fId1.push_back(kf_msg.id);
+    // Compare with keyframes from camera 2
+    if(!bow2.empty())
+      compareKeyframeBOW(bow, camId);
+    
     }
-  else{
+  else if(camId==2){
     bide->compute(frame, kpts, bow);
     bow2.push_back(bow);
     fId2.push_back(kf_msg.id);
+    
+    // Compare with keyframes from camera 1
+    if(!bow1.empty())
+      compareKeyframeBOW(bow,camId);
     }
     
   // For Debugging : Visualize keypoints
+  /*
   static const std::string FEATURES_DEBUG_WINDOW1 = "Cam 1";
   static const std::string FEATURES_DEBUG_WINDOW2 = "Cam 2";
-  if(camID==1){
+  if(camId==1){
   cv::drawKeypoints(frame, kpts, frame);
   cv::imshow(FEATURES_DEBUG_WINDOW1, frame);
   cv::waitKey(1);}
@@ -150,79 +159,116 @@ void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camI
   cv::drawKeypoints(frame, kpts, frame);
   cv::imshow(FEATURES_DEBUG_WINDOW2, frame);
   cv::waitKey(1);} 
-
+  */
 
 }
 
-void PRfabmap::compareKeyframeBOW()
-{
-  // Run FabMap (Camera1 images vs Camera2 images)
+void PRfabmap::compareKeyframeBOW(cv::Mat bow, int camId)
+{ 
+  // Run FabMap
   std::vector<cv::of2::IMatch> matches;
-  fabMap->compare(bow2, bow1, matches);  // compare(query_img, test_img, match)
+  std::vector<double> result;
+  int qId = -1; 
   
-  cv::Mat matchMat; 
-  matchMat = cv::Mat::zeros(bow2.rows, bow1.rows, CV_32F); 
- 
+  if(camId==1){
+      qId = bow1.rows-1;
+      std::cout<<"Cam 1: Compare "<<qId<<" with "<<" Cam 2"<<std::endl;
+      fabMap->compare(bow, bow2, matches);  // compare(query_img, test_img, match)
+     }    
+  else if (camId==2){
+      qId = bow2.rows-1;
+      std::cout<<"Cam 2: Compare "<<qId<<" with "<<"Cam 1"<<std::endl;
+      fabMap->compare(bow, bow1, matches);  // compare(query_img, test_img, match)
+  }  
+  
+  // Store results and publish them
   std::vector<cv::of2::IMatch>::iterator l;
-  for(l= matches.begin(); l!=matches.end();++l)
+  for(l= matches.begin(); l!=matches.end(); l++)
   {   
       if(l->imgIdx != -1)
-      matchMat.at<float>(l->queryIdx, l->imgIdx) = l->match;   // Probability of matching
+	result.push_back(l->match);   // Probability of matching
   }
+ 
+
+ place_recognizer::keyframeMatchInfo msg;
   
-  publishMatchInfo(matchMat);
-
-}
-
-
-void PRfabmap::publishMatchInfo(cv::Mat& matchMat)
-{
-  place_recognizer::keyframeMatchInfo msg;
-  
-  for(int i=0; i < matchMat.rows ;i++){
-    for(int j=0; j< matchMat.cols ;j++){
-      if(matchMat.at<float>(i,j) > matchThresh) 
-      {
+  for(int j=0; j<result.size() ;j++){
+     if(result[j] > matchThresh) 
+      { 
+	std::cout<<"Candidate Match Found"<<std::endl;
 	 // Publish match info
 	 msg.isMatch = true;
-	 msg.matchProb = matchMat.at<float>(i,j);
-	 msg.kfId1 = fId1[j]; //From Cam 1 
-	 msg.kfId2 = fId2[i]; //From Cam 2
+	 msg.matchProb = result[j];
+	 msg.iCam = camId;
+	 
+	 if(camId == 1){
+	  msg.kfId1 = qId; //From Cam 1 
+	  msg.kfId2 = j;//fId2[j]; //From Cam 2
+	 }
+	 else if(camId == 2){
+	  msg.kfId1 = j;// fId1[j];
+	  msg.kfId2 = qId; 
+	 }
 	 
 	 pub_match.publish(msg);
 	
       }
     }
-   }
+ 
+}
+
+void PRfabmap::publishMatchInfo(cv::Mat matchMat, int camId, int fId)
+{
+  std::cout<<"publishMatchInfo"<<std::endl;  
+  place_recognizer::keyframeMatchInfo msg;
+  
+  for(int j=0; j< matchMat.cols ;j++){
+     if(matchMat.at<float>(1,j) > matchThresh) 
+      { 
+	std::cout<<"Candidate Match Found"<<std::endl;
+	 // Publish match info
+	 msg.isMatch = true;
+	 msg.matchProb = matchMat.at<float>(1,j);
+	  
+	 if(camId == 1){
+	  msg.kfId1 = fId; //From Cam 1 
+	  msg.kfId2 = fId;//fId2[j]; //From Cam 2
+	 }
+	 else if(camId == 2){
+	  msg.kfId1 = fId;// fId1[j];
+	  msg.kfId2 = fId; 
+	 }
+	 
+	 pub_match.publish(msg);
+	
+      }
+    }
   
 }
 
 void PRfabmap::kfCb1(const place_recognizer::keyframeImg::ConstPtr& fmsg)
 {
-  int camID = 1;
+  int camId = 1;
   ROS_INFO("Image Callback Function 1 : Reading Image Number = %d", fmsg->id);
   
   // Add new keyframe
   place_recognizer::keyframeImg kf_msg;
   kf_msg = *fmsg;
-  addNewKeyframeBOW(kf_msg, camID);
+  addNewKeyframeBOW(kf_msg, camId);
+  
  
 }
 
 void PRfabmap::kfCb2(const place_recognizer::keyframeImg::ConstPtr& fmsg)
 {
-  int camID = 2;
+  int camId = 2;
   ROS_INFO("Image Callback Function 2 : Reading Image Number = %d", fmsg->id);
 
   // Add new keyframe
   place_recognizer::keyframeImg kf_msg;
   kf_msg = *fmsg;
-  addNewKeyframeBOW(kf_msg, camID); 
-  
-  // Compare with keyframes from camera 1
-  if(!bow1.empty())
-    compareKeyframeBOW();
-  
+  addNewKeyframeBOW(kf_msg, camId); 
+ 
 }  
 
 bool PRfabmap::isValid() const

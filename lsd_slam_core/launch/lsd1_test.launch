@@ -1,0 +1,20 @@
+<launch>
+   	<node pkg="rosbag" type="play" name="player1"  args="/home/alphabot/niv/datasets/IRRCyN_Short2_FabMap_Test.bag">
+	    	<remap from="camera/image_raw" to="lsd1/camera/image_raw" />
+	</node> 
+	 
+	<group ns="lsd1">
+		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<remap from="image" to="camera/image_raw" />
+			<param name="calib" value="$(find lsd_slam_core)/calib/ueye_cam.cfg" />
+	    </node>	
+	
+	</group> 
+
+	<node name="viewer1" pkg="lsd_slam_viewer" type="viewer" output="screen">
+			<remap from="/lsd_slam/liveframes" to="/lsd1/lsd_slam/liveframes" />
+	        <remap from="/lsd_slam/keyframes" to="/lsd1/lsd_slam/keyframes" />
+	        <remap from="/lsd_slam/graph" to="/lsd1/lsd_slam/graph" />
+	</node>
+
+</launch>
