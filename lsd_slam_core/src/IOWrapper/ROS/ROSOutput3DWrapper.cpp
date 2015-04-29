@@ -137,11 +137,23 @@ void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 	keyframeImg_publisher.publish(tmp_img.toImageMsg()); */
 	
 	
+
+	
 	// Convert image to ROS sensor_msgs/Image, add image id etc and publish
 	cv_bridge::CvImage tmp_img;
 	sensor_msgs::Image fImg;
 	place_recognizer::keyframeImg fMsg;
 	boost::shared_lock<boost::shared_mutex> lock = f->getActiveLock();
+	
+	//camera parameters
+	int w = f->width(publishLvl);
+	int h = f->height(publishLvl);
+	fMsg.fx = f->fx(publishLvl);
+	fMsg.fy = f->fy(publishLvl);
+	fMsg.cx = f->cx(publishLvl);
+	fMsg.cy = f->cy(publishLvl);
+	fMsg.width = w;
+	fMsg.height = h;
 	
 	// Extract image from frame structure and covert into sensor_msgs/Image format
 	cv::Mat kfImgCV(f->height(), f->width(), CV_32F, const_cast<float*>(f->image()));
@@ -150,10 +162,19 @@ void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 	tmp_img.image    = kfImgCV;
 	tmp_img.toImageMsg(fImg);
 	
+	// Extract depth map from frame structure and convert into sensor_msgs/Image format
+	cv_bridge::CvImage tmp_dep;
+	sensor_msgs::Image fDep;
+	cv::Mat kfDepCV(f->height(), f->width(), CV_32F, const_cast<float*>(f->idepth()));
+	tmp_dep.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+	tmp_dep.image = kfDepCV;
+	tmp_dep.toImageMsg(fDep);
+	
 	//Copy image id , timestamp and keyframe image to msg and publish  
 	fMsg.id = f->id();
 	fMsg.time = f->timestamp();
 	fMsg.img = fImg; 
+	fMsg.idep = fDep; 
 	
 	// Publish keyframeImg message
 	keyframeImg_publisher.publish(fMsg); 

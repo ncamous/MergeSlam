@@ -1,0 +1,9 @@
+<launch>
+	
+	<node name="place_recognizer_node" pkg="place_recognizer" type="place_recognizer_node" output="screen">
+			<remap from="keyframeImgs1" to="/lsd1/lsd_slam/keyframeImgs" />
+	        <remap from="keyframeImgs2" to="/lsd2/lsd_slam/keyframeImgs" />
+	</node>
+
+</launch>
+

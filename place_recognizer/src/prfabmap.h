@@ -40,10 +40,42 @@ private:
   void kfCb1(const place_recognizer::keyframeImg::ConstPtr& fmsg);
   void kfCb2(const place_recognizer::keyframeImg::ConstPtr& fmsg);
     
+ 
+  void computeKeyPointLocs(std::vector<cv::KeyPoint>& kpts, cv::Mat& p2d);
+  void computeKeyPoint3d(cv::Mat& dMap ,cv::Mat& p2d,cv::Mat& p3d, int camId);
+  
+  
   cv::Ptr<cv::FeatureDetector> detector;
+  cv::Ptr<cv::DescriptorExtractor> extractor;
+  cv::Ptr<cv::DescriptorMatcher> matcher;
   cv::Ptr<cv::BOWImgDescriptorExtractor> bide;
   cv::Ptr<cv::of2::FabMap> fabMap;
+ 
+  std::vector<std::vector<cv::KeyPoint> > kptsVec1;
+  std::vector<std::vector<cv::KeyPoint> > kptsVec2;
+  std::vector<cv::Mat> X2dC1; // 2d feature locations for camera 1
+  std::vector<cv::Mat> X2dC2; // 2d feature locations for camera 2
+  std::vector<cv::Mat> X3dC1; // 3d feature locations for camera 1
+  std::vector<cv::Mat> X3dC2; // 3d feature locations for camera 2
+ 
+  // Camera 1 parameters 
+  float fx1;
+  float fy1;
+  float cx1;
+  float cy1;
+  unsigned int height1;
+  unsigned int width1;
+    
+  // Camera 2 parameters
+  float fx2;
+  float fy2;
+  float cx2;
+  float cy2;
+  unsigned int height2;
+  unsigned int width2;
+
   
+ 
   cv::Mat bow1; // Mat to store bag of words from camera 1
   cv::Mat bow2; // Mat to store bag of words from camera 2
   std::vector<int> fId1;
