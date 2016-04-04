@@ -27,7 +27,7 @@
 #include "std_msgs/Float32MultiArray.h"
 #include "lsd_slam_viewer/keyframeGraphMsg.h"
 #include "lsd_slam_viewer/keyframeMsg.h"
-#include "place_recognizer/keyframeImg.h"
+//#include "place_recognizer/keyframeImg.h"
 
 #include "DataStructures/Frame.h"
 #include "GlobalMapping/KeyFrameGraph.h"
@@ -56,8 +56,39 @@ ROSOutput3DWrapper::ROSOutput3DWrapper(int width, int height)
 	//keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
 	//keyframeImg_publisher = nh_.advertise<sensor_msgs::Image>(keyframeImg_channel,1);
 	
-	keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
-	keyframeImg_publisher = nh_.advertise<place_recognizer::keyframeImg>(keyframeImg_channel,1);
+	//keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
+	//keyframeImg_publisher = nh_.advertise<place_recognizer::keyframeImg>(keyframeImg_channel,1);
+
+	graph_channel = nh_.resolveName("lsd_slam/graph");
+	graph_publisher = nh_.advertise<lsd_slam_viewer::keyframeGraphMsg>(graph_channel,1);
+
+	debugInfo_channel = nh_.resolveName("lsd_slam/debug");
+	debugInfo_publisher = nh_.advertise<std_msgs::Float32MultiArray>(debugInfo_channel,1);
+
+	pose_channel = nh_.resolveName("lsd_slam/pose");
+	pose_publisher = nh_.advertise<geometry_msgs::PoseStamped>(pose_channel,1);
+
+
+	publishLvl=0;
+}
+
+ROSOutput3DWrapper::ROSOutput3DWrapper(int width, int height, int camId)
+{
+	this->width = width;
+	this->height = height;
+	this->camId = camId;
+	
+	liveframe_channel = nh_.resolveName("lsd_slam/liveframes");
+	liveframe_publisher = nh_.advertise<lsd_slam_viewer::keyframeMsg>(liveframe_channel,1);
+
+	keyframe_channel = nh_.resolveName("lsd_slam/keyframes");
+	keyframe_publisher = nh_.advertise<lsd_slam_viewer::keyframeMsg>(keyframe_channel,1);
+
+	//keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
+	//keyframeImg_publisher = nh_.advertise<sensor_msgs::Image>(keyframeImg_channel,1);
+	
+	//keyframeImg_channel = nh_.resolveName("lsd_slam/keyframeImgs");
+	//keyframeImg_publisher = nh_.advertise<place_recognizer::keyframeImg>(keyframeImg_channel,1);
 
 	graph_channel = nh_.resolveName("lsd_slam/graph");
 	graph_publisher = nh_.advertise<lsd_slam_viewer::keyframeGraphMsg>(graph_channel,1);
@@ -84,14 +115,30 @@ void ROSOutput3DWrapper::publishKeyframe(Frame* f)
 
 	boost::shared_lock<boost::shared_mutex> lock = f->getActiveLock();
 
+	fMsg.camId = camId;
 	fMsg.id = f->id();
 	fMsg.time = f->timestamp();
 	fMsg.isKeyframe = true;
 
 	int w = f->width(publishLvl);
 	int h = f->height(publishLvl);
-
-	memcpy(fMsg.camToWorld.data(),f->getScaledCamToWorld().cast<float>().data(),sizeof(float)*7);
+	
+	// For Debug Purposes *ADDED
+	std::cout<<"Keyframe Id = "<< fMsg.id << std::endl;
+	std::cout<<"Pose Quaternion ="<<f->getScaledCamToWorld().quaternion().w()<<","<<f->getScaledCamToWorld().quaternion().x()<< "," << f->getScaledCamToWorld().quaternion().y() <<"," << f->getScaledCamToWorld().quaternion().z() <<std::endl;
+	std::cout<<"Pose Translation ="<<f->getScaledCamToWorld().translation()[0]<<","<<f->getScaledCamToWorld().translation()[1] <<","<< f->getScaledCamToWorld().translation()[2] <<std::endl;
+	std::cout<<"Scale ="<<f->getScaledCamToWorld().scale() << std::endl;
+	//std::cout<<"RxSO3 ="<<f->getScaledCamToWorld().rxso3() << std::endl;
+	std::cout<<"Translation ="<<f->getScaledCamToWorld().translation() << std::endl;
+	
+//
+	memcpy(fMsg.camToWorld.data(),f->getScaledCamToWorld().cast<float>().data(),sizeof(float)*7); //destination, source, size of data casted to 7 decimals
+	
+	// Debug After Copying
+/*	for(unsigned int i = 0; i < fMsg.camToWorld.size();i++)
+	      std::cout<< fMsg.camToWorld[i]<<",";
+	std::cout<<std::endl;
+*/	
 	fMsg.fx = f->fx(publishLvl);
 	fMsg.fy = f->fy(publishLvl);
 	fMsg.cx = f->cx(publishLvl);
@@ -121,8 +168,8 @@ void ROSOutput3DWrapper::publishKeyframe(Frame* f)
 	keyframe_publisher.publish(fMsg);
 }
 
-void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
-{	
+//void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
+//{ 	
 	/*
 	// Convert image to ROS sensor_msgs/Image and publish
 	//Add id num and other meta information
@@ -138,7 +185,7 @@ void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 	
 	
 
-	
+	/*
 	// Convert image to ROS sensor_msgs/Image, add image id etc and publish
 	cv_bridge::CvImage tmp_img;
 	sensor_msgs::Image fImg;
@@ -180,12 +227,12 @@ void ROSOutput3DWrapper::publishKeyframeImg(Frame* f)
 	keyframeImg_publisher.publish(fMsg); 
  
 }
-
+*/
 
 void ROSOutput3DWrapper::publishTrackedFrame(Frame* kf)
 {
 	lsd_slam_viewer::keyframeMsg fMsg;
-
+	fMsg.camId = camId;
 	fMsg.id = kf->id();
 	fMsg.time = kf->timestamp();
 	fMsg.isKeyframe = false;
@@ -231,14 +278,18 @@ void ROSOutput3DWrapper::publishTrackedFrame(Frame* kf)
 
 
 
+
 void ROSOutput3DWrapper::publishKeyframeGraph(KeyFrameGraph* graph)
 {
-	lsd_slam_viewer::keyframeGraphMsg gMsg;
 
+	lsd_slam_viewer::keyframeGraphMsg gMsg;
+	gMsg.camId = camId;
+	
 	graph->edgesListsMutex.lock();
 	gMsg.numConstraints = graph->edgesAll.size();
 	gMsg.constraintsData.resize(gMsg.numConstraints * sizeof(GraphConstraint));
 	GraphConstraint* constraintData = (GraphConstraint*)gMsg.constraintsData.data();
+
 	for(unsigned int i=0;i<graph->edgesAll.size();i++)
 	{
 		constraintData[i].from = graph->edgesAll[i]->firstFrame->id();
@@ -246,18 +297,30 @@ void ROSOutput3DWrapper::publishKeyframeGraph(KeyFrameGraph* graph)
 		Sophus::Vector7d err = graph->edgesAll[i]->edge->error();
 		constraintData[i].err = sqrt(err.dot(err));
 	}
+	
 	graph->edgesListsMutex.unlock();
+//	std::cout<<"Edges "<<std::endl;
 
+//Exception of sophus negative scale is trown in this section
+
+	//std::cout<<"Mutex locked"<<std::endl;
 	graph->keyframesAllMutex.lock_shared();
 	gMsg.numFrames = graph->keyframesAll.size();
 	gMsg.frameData.resize(gMsg.numFrames * sizeof(GraphFramePose));
+	//std::cout<<"Resizing"<<std::endl;
+
 	GraphFramePose* framePoseData = (GraphFramePose*)gMsg.frameData.data();
 	for(unsigned int i=0;i<graph->keyframesAll.size();i++)
 	{
 		framePoseData[i].id = graph->keyframesAll[i]->id();
 		memcpy(framePoseData[i].camToWorld, graph->keyframesAll[i]->getScaledCamToWorld().cast<float>().data(),sizeof(float)*7);
+		//std::cout<<"Frame pose "<< i<<std::endl;
 	}
+//	std::cout<<"Frame pose stored unlock"<<std::endl;
 	graph->keyframesAllMutex.unlock_shared();
+
+	//std::cout<<"Frame Pose pub"<<std::endl;
+
 
 	graph_publisher.publish(gMsg);
 }

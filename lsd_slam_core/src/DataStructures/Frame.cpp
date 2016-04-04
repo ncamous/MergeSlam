@@ -37,7 +37,9 @@ Frame::Frame(int id, int width, int height, const Eigen::Matrix3f& K, double tim
 	initialize(id, width, height, K, timestamp);
 	
 	data.image[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
-	float* maxPt = data.image[0] + data.width[0]*data.height[0];
+
+	
+	float* maxPt = data.image[0]  + data.width[0]*data.height[0];
 
 	for(float* pt = data.image[0]; pt < maxPt; pt++)
 	{
@@ -291,6 +293,82 @@ void Frame::setDepthFromGroundTruth(const float* depth, float cov_scale)
 	release(IDEPTH | IDEPTH_VAR, true, true);
 	data.hasIDepthBeenSet = true;
 }
+
+//Added: Nived
+void Frame::setIDepthKeyFrame(const unsigned char* idepth, const unsigned char* idepth_var)
+{
+  
+  	boost::shared_lock<boost::shared_mutex> lock = getActiveLock();
+	boost::unique_lock<boost::mutex> lock2(buildMutex);
+  	
+	// Set Idepth (Level Zero)
+	if(data.idepth[0] == 0)
+		data.idepth[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
+	if(data.idepthVar[0] == 0)
+		data.idepthVar[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
+		
+	
+	float* maxPt_idepth = data.idepth[0] + data.width[0]*data.height[0];
+
+	float* idepthf = (float *)idepth;
+	for(float* pt = data.idepth[0]; pt < maxPt_idepth; pt++)
+	{
+		*pt = *idepthf;
+		idepthf++;
+	}
+
+	
+	data.idepthVar[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
+	float* maxPt_idepthVar = data.idepthVar[0] + data.width[0]*data.height[0];
+
+	float* idepth_varf = (float*)idepth_var;
+	for(float* pt = data.idepthVar[0]; pt < maxPt_idepthVar; pt++)
+	{
+		*pt = *idepth_varf;
+		idepth_varf++;
+	}
+  
+
+	data.idepthValid[0] = true;
+	data.idepthVarValid[0] = true;
+	data.hasIDepthBeenSet = true;
+	
+
+}
+
+
+void Frame::buildAllPyramidLevels()
+{
+   // Build Gradient At Level 0
+   require(GRADIENTS,0);
+   data.gradientsValid[0] = true;
+    
+   require(MAX_GRADIENTS,0);
+   data.maxGradientsValid[0] = true;
+   
+  
+  // Build All Image & IDEPTH/VAR Levels 
+  for(int lvl = 1; lvl < PYRAMID_LEVELS; lvl++)
+  {
+    require(IMAGE,lvl);
+    data.imageValid[lvl] = true;
+    
+    require(IDEPTH,lvl);
+    data.idepthValid[lvl] = true;
+    
+    require(IDEPTH_VAR,lvl);
+    data.idepthVarValid[lvl] = true;
+    
+    require(GRADIENTS,lvl);
+    data.gradientsValid[lvl] = true;
+    
+    require(MAX_GRADIENTS,lvl);
+    data.maxGradientsValid[lvl] = true;
+    
+  }
+    
+}
+
 
 void Frame::prepareForStereoWith(Frame* other, Sim3 thisToOther, const Eigen::Matrix3f& K, const int level)
 {

@@ -9,6 +9,7 @@
 	 
 	<group ns="lsd1">
 		<node name="lsd" pkg="lsd_slam_core" type="live_slam" output="screen">
+			<param name="camId" value="1"/>
 			<remap from="image" to="imageRectified" />
 	        <remap from="camera_info" to="camInfo" />
 		</node>	
@@ -21,10 +22,10 @@
 		</node> -->
 	</group> 
 
-	<node name="viewer1" pkg="lsd_slam_viewer" type="viewer" output="screen">
+	<!--<node name="viewer1" pkg="lsd_slam_viewer" type="viewer" output="screen">
 			<remap from="/lsd_slam/liveframes" to="/lsd1/lsd_slam/liveframes" />
 	        <remap from="/lsd_slam/keyframes" to="/lsd1/lsd_slam/keyframes" />
-	        <remap from="/lsd_slam/graph" to="/lsd1/lsd_slam/graph" />
-	</node>
+	        <remap from="/lsd_slam/graph" to="/lsd1/lsd_slam/graph" /> 
+	</node> -->
 
 </launch>

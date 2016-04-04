@@ -55,6 +55,12 @@ public:
 	/** Sets or updates idepth and idepthVar on level zero. Invalidates higher levels. */
 	void setDepth(const DepthMapPixelHypothesis* newDepth);
 
+	/** Sets or updates idepth and idepthVar from float array on level zero. Invalidates higher level  [*Added*] */
+	void setIDepthKeyFrame(const unsigned char* idepth, const unsigned char* idepth_var);
+	
+	/** Builds All Pyramid Levels (Image, Depth And Gradients)  [*Added*] */
+	void buildAllPyramidLevels(); // 
+		
 	/** Calculates mean information for statistical purposes. */
 	void calculateMeanInformation();
 	
@@ -148,6 +154,7 @@ public:
 	 */
 	FramePoseStruct* pose;
 	Sim3 getScaledCamToWorld(int num=0) { return pose->getCamToWorld();}
+	Sim3 getScaledCamToWorld_ext(int num=0) { return pose->getCamToWorld_ext();}
 	bool hasTrackingParent() { return pose->trackingParent != nullptr;}
 	Frame* getTrackingParent() { return pose->trackingParent->frame;}
 

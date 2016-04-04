@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   roscpp
   rosbag
+  coslam_msgs
   )
 
 find_package(Eigen REQUIRED)
@@ -111,6 +112,25 @@ target_link_libraries(live_slam lsdslam ${catkin_LIBRARIES} ${G2O_LIBRARIES})
 add_executable(dataset src/main_on_images.cpp)
 target_link_libraries(dataset lsdslam ${catkin_LIBRARIES} ${G2O_LIBRARIES})
 
+# Source files for merge code
+#set(merge_SOURCE_FILES
+#    ${PROJECT_SOURCE_DIR}/src/MergeSystem.cpp
+#    ${PROJECT_SOURCE_DIR}/src/Merge/ROSKeyFrameStreamThread.cpp
+#  )
+
+#build lsd_merge node
+#add_executable(lsd_merge src/main_on_merge.cpp src/MergeSystem.cpp)
+add_executable(lsd_merge src/main_on_merge.cpp src/merge_system_thread.cpp)
+
+target_link_libraries(lsd_merge lsdslam ${catkin_LIBRARIES})
+
+
+# Sim3Tracker Node
+add_executable(lsd_sim3tracker src/main_sim3tracker.cpp)
+target_link_libraries(lsd_sim3tracker lsdslam ${catkin_LIBRARIES})
+
+
 # TODO add INSTALL
+
 
 

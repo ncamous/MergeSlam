@@ -40,6 +40,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+//#define ANDROID
+
 #ifdef ANDROID
 #include <android/log.h>
 #endif
@@ -488,8 +490,9 @@ void SlamSystem::createNewCurrentKeyframe(std::shared_ptr<Frame> newKeyframeCand
 	currentKeyFrame = newKeyframeCandidate;
 	currentKeyFrameMutex.unlock();
 	
-	if(outputWrapper!= 0)
-		outputWrapper->publishKeyframeImg(currentKeyFrame.get());
+	/*if(outputWrapper!= 0)
+		outputWrapper->publishKeyframe(currentKeyFrame.get());
+	*/	
 	
 }
 void SlamSystem::loadNewCurrentKeyframe(Frame* keyframeToLoad)
@@ -1548,6 +1551,9 @@ int SlamSystem::findConstraintsForNewKeyFrames(Frame* newKeyFrame, bool forcePar
 			constraints.back()->firstFrame = newKeyFrame;
 			constraints.back()->secondFrame = newKeyFrame->getTrackingParent();
 			constraints.back()->secondToFirst = constraints.back()->firstFrame->getScaledCamToWorld().inverse() * constraints.back()->secondFrame->getScaledCamToWorld();
+			
+			//INFORMATION MATRIX IS COVARIANCE^-1  so invert to obtain the covariance 
+			
 			constraints.back()->information  <<
 					0.8098,-0.1507,-0.0557, 0.1211, 0.7657, 0.0120, 0,
 					-0.1507, 2.1724,-0.1103,-1.9279,-0.1182, 0.1943, 0,

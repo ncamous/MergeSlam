@@ -18,6 +18,7 @@
   <build_depend>roscpp</build_depend>
   <build_depend>lsd_slam_viewer</build_depend>
   <build_depend>place_recognizer</build_depend>
+  <build_depend>coslam_msgs</build_depend>
   <build_depend>rosbag</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>suitesparse</build_depend>
@@ -33,5 +34,6 @@
   <run_depend>suitesparse</run_depend>
   <run_depend>libg2o</run_depend>
   <run_depend>place_recognizer</run_depend>
+  <run_depend>coslam_msgs</run_depend>
   
 </package> 

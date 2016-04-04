@@ -128,7 +128,7 @@ using namespace lsd_slam;
 int main( int argc, char** argv )
 {
 	ros::init(argc, argv, "LSD_SLAM");
-
+	
 	dynamic_reconfigure::Server<lsd_slam_core::LSDParamsConfig> srv(ros::NodeHandle("~"));
 	srv.setCallback(dynConfCb);
 
@@ -137,8 +137,11 @@ int main( int argc, char** argv )
 
 	packagePath = ros::package::getPath("lsd_slam_core")+"/";
 
-
-
+	// Load Camera Id [*Added*]
+	int camId;
+	ros::param::get("~camId",camId);
+	std::cout<<"Camera Id = "<< camId << std::endl; 
+	
 	// get camera calibration in form of an undistorter object.
 	// if no undistortion is required, the undistorter will just pass images through.
 	std::string calibFile;

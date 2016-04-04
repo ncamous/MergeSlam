@@ -124,12 +124,16 @@ void KeyFrameGraph::dumpMap(std::string folder)
 	int succ = system(("rm -rf "+folder).c_str());
 	succ += system(("mkdir "+folder).c_str());
 
+	// Edit: Debug Info
+	std::cout << "Keyframes All Size" << keyframesAll.size() << std::endl; 
+	
+	
 	for(unsigned int i=0;i<keyframesAll.size();i++)
 	{
-		snprintf(buf, 100, "%s/depth-%d.png", folder.c_str(), i);
+		snprintf(buf, 100, "%s/depth-%d.png", folder.c_str(), keyframesAll[i]->id());
 		cv::imwrite(buf, getDepthRainbowPlot(keyframesAll[i], 0));
 
-		snprintf(buf, 100, "%s/frame-%d.png", folder.c_str(), i);
+		snprintf(buf, 100, "%s/frame-%d.png", folder.c_str(), keyframesAll[i]->id());
 		cv::imwrite(buf, cv::Mat(keyframesAll[i]->height(), keyframesAll[i]->width(),CV_32F,keyframesAll[i]->image()));
 
 		snprintf(buf, 100, "%s/var-%d.png", folder.c_str(), i);
@@ -251,6 +255,7 @@ void KeyFrameGraph::addKeyFrame(Frame* frame)
 	frame->pose->graphVertex = vertex;
 
 	newKeyframesBuffer.push_back(frame);
+	std::cout<<"NewKeyframe Buffer Size: "<<newKeyframesBuffer.size()<<std::endl;
 
 }
 
@@ -274,8 +279,7 @@ void KeyFrameGraph::insertConstraint(KFConstraintStruct* constraint)
 
 	constraint->edge = edge;
 	newEdgeBuffer.push_back(constraint);
-
-
+	//std::cout<<"NewEdgeBuffer Size: "<<newEdgeBuffer.size()<<std::endl;
 	constraint->firstFrame->neighbors.insert(constraint->secondFrame);
 	constraint->secondFrame->neighbors.insert(constraint->firstFrame);
 
@@ -284,12 +288,11 @@ void KeyFrameGraph::insertConstraint(KFConstraintStruct* constraint)
 		//shortestDistancesMap
 	}
 
-
-
 	edgesListsMutex.lock();
 	constraint->idxInAllEdges = edgesAll.size();
 	edgesAll.push_back(constraint);
 	edgesListsMutex.unlock();
+	
 }
 
 
@@ -307,18 +310,48 @@ bool KeyFrameGraph::addElementsFromBuffer()
 		keyframesForRetrack.push_back(newKF);
 
 		added = true;
+		std::cout<<"OK"<<keyframesForRetrack.size()<<std::endl;
+
 	}
 	keyframesForRetrackMutex.unlock();
-
+	std::cout<<"Adding elements size "<<keyframesForRetrack.size()<<std::endl;
 	newKeyframesBuffer.clear();
 	for (auto edge : newEdgeBuffer)
 	{
 		graph.addEdge(edge->edge);
 		added = true;
+
 	}
 	newEdgeBuffer.clear();
-
 	return added;
+
+	/* 	bool added = false;
+
+	keyframesForRetrackMutex.lock();
+
+	for (unsigned int i=0; i< newKeyFrames.size(); i++)
+	{
+		graph.addVertex(newKeyFrames[i]->pose->graphVertex);
+		assert(!newKeyFrames[i]->pose->isInGraph);
+		newKeyFrames[i]->pose->isInGraph = true;
+
+		keyframesForRetrack.push_back(newKeyFrames[i]);
+
+		added = true;
+	}
+	keyframesForRetrackMutex.unlock();
+
+	newKeyframesBuffer.clear();
+	
+	for (auto edge : newEdgeBuffer)
+	{
+		graph.addEdge(edge->edge);
+		added = true;
+
+	}
+	newEdgeBuffer.clear();
+	return added;
+*/
 }
 
 int KeyFrameGraph::optimize(int num_iterations)
@@ -326,10 +359,9 @@ int KeyFrameGraph::optimize(int num_iterations)
 	// Abort if graph is empty, g2o shows an error otherwise
 	if (graph.edges().size() == 0)
 		return 0;
-	
+
 	graph.setVerbose(false); // printOptimizationInfo
 	graph.initializeOptimization();
-	
 
 	return graph.optimize(num_iterations, false);
 

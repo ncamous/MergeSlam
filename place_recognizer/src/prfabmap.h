@@ -17,6 +17,17 @@
 
 #include "place_recognizer/keyframeImg.h"
 #include "place_recognizer/keyframeMatchInfo.h"
+#include "coslam_msgs/keyframeMatchInfo.h"
+#include "lsd_slam_viewer/keyframeMsg.h"
+#include "pr_settings.h"
+
+
+struct InputPointDense
+{
+	float idepth;
+	float idepth_var;
+	unsigned char color[4];
+};
 
 class PRfabmap
 {
@@ -24,23 +35,35 @@ public:
   PRfabmap(); 	// Initializes FabMap by loading vocabulary, training data etc
   ~PRfabmap();  // Prints the confusion matrix to file before exiting;
  
+ // Place Recognition Related
  void addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camId); // Computes BOW for each new keyframe and stores it
+ void addNewKeyframeBOW(cv::Mat& frame, int fId, int camId);
+ 
  void compareKeyframeBOW(cv::Mat bow,int camId); // Compares BOW from two cameras and finds potential overlap.  
+ void compareKeyframeBOW(int camId);
+ 
  void publishMatchInfo(cv::Mat matchMat , int camId, int fId); // if match is found it publishes on a topic
- //void computeConfusionMat(); // For debugging
  bool isValid() const; // Returns if the class is initialized correctly (i.e. if the required files coul be loaded). 
-  
+ 
+ // Sim3 Estimate Related
+ 
+ 
+ 
+ // Debugging
+ void publishMatchInfoDebug();
+ void saveKFImage(cv::Mat& image, cv::Mat& idepth, int camId, int fId);
+ //void computeConfusionMat(); 
+ 
 private:  
   
   ros::NodeHandle nh;
   ros::Subscriber sub_kf1;
   ros::Subscriber sub_kf2;
   ros::Publisher pub_match;
-  
-  void kfCb1(const place_recognizer::keyframeImg::ConstPtr& fmsg);
-  void kfCb2(const place_recognizer::keyframeImg::ConstPtr& fmsg);
     
- 
+   
+  void kfCb(lsd_slam_viewer::keyframeMsgConstPtr msg);
+   
   void computeKeyPointLocs(std::vector<cv::KeyPoint>& kpts, cv::Mat& p2d);
   void computeKeyPoint3d(cv::Mat& dMap ,cv::Mat& p2d,cv::Mat& p3d, int camId);
   
@@ -78,13 +101,18 @@ private:
  
   cv::Mat bow1; // Mat to store bag of words from camera 1
   cv::Mat bow2; // Mat to store bag of words from camera 2
+  
   std::vector<int> fId1;
   std::vector<int> fId2;
+  
   cv::Mat confusionMat;
   double matchThresh; //matching threshold probability to be considered as the same place 
   
   std::string basePath; // base path of this package
   bool valid; // Is FabMap initialized properly or not
+  
+  // Debug variables 
+  int debug_count1;
   
   
 };

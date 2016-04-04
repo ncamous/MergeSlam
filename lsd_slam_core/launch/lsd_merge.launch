@@ -1,0 +1,13 @@
+<launch>
+   	
+  
+   	<node name="merge" pkg="lsd_slam_core" type="lsd_merge" output="screen">
+	</node>
+
+	<node name="viewer3" pkg="lsd_slam_viewer" type="viewer" output="screen">
+	<!		<remap from="/lsd_slam/liveframes" to="/lsd1/lsd_slam/liveframes" />
+	        <remap from="/lsd_slam/keyframes" to="/lsd1/lsd_slam/keyframes" />
+	        <remap from="/lsd_slam/graph" to="/lsd1/lsd_slam/graph" />-->
+	</node>
+
+</launch>

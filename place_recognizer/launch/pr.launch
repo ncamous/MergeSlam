@@ -5,5 +5,9 @@
 	        <remap from="keyframeImgs2" to="/lsd2/lsd_slam/keyframeImgs" />
 	</node>
 
+
+
+
+
 </launch>
 

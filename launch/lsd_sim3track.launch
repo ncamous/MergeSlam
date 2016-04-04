@@ -1,0 +1,7 @@
+<launch>
+   	
+  
+   	<node name="tracker" pkg="lsd_slam_core" type="lsd_sim3tracker" output="screen">
+	</node>
+
+</launch>

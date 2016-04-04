@@ -64,6 +64,7 @@ public:
 
 	// initializes cam-calib independent stuff
 	ROSOutput3DWrapper(int width, int height);
+	ROSOutput3DWrapper(int width, int height, int camId);  //[*Added*]
 	~ROSOutput3DWrapper();
 
 	virtual void publishKeyframeGraph(KeyFrameGraph* graph);
@@ -72,7 +73,7 @@ public:
 	virtual void publishKeyframe(Frame* f);
 	
 	//publishes keyframe along with images
-	virtual void publishKeyframeImg(Frame* kf);
+	//virtual void publishKeyframeImg(Frame* kf);
 
 	// published a tracked frame that did not become a keyframe (i.e. has no depth data)
 	virtual void publishTrackedFrame(Frame* f);
@@ -89,6 +90,7 @@ public:
 	
 private:
 	int width, height;
+	int camId;
 
 	std::string liveframe_channel;
 	ros::Publisher liveframe_publisher;

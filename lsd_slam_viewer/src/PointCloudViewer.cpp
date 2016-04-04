@@ -139,6 +139,8 @@ void PointCloudViewer::addFrameMsg(lsd_slam_viewer::keyframeMsgConstPtr msg)
 	meddleMutex.unlock();
 }
 
+
+
 void PointCloudViewer::addGraphMsg(lsd_slam_viewer::keyframeGraphMsgConstPtr msg)
 {
 	meddleMutex.lock();

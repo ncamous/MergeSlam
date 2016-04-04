@@ -1,22 +1,24 @@
 #include "prfabmap.h"
 #include "Sim3dSolver.h"
+#include "sophus/sim3.hpp"
 
 PRfabmap::PRfabmap()
 { 
   // set subscribers
-  sub_kf1 = nh.subscribe("keyframeImgs1", 10, &PRfabmap::kfCb1, this);
-  sub_kf2 = nh.subscribe("keyframeImgs2", 10, &PRfabmap::kfCb2, this);
+  sub_kf1 = nh.subscribe("/lsd1/lsd_slam/keyframes", 10, &PRfabmap::kfCb, this);
+  sub_kf2 = nh.subscribe("/lsd2/lsd_slam/keyframes", 10, &PRfabmap::kfCb, this);
+  
   
   // set Publishers
-  pub_match = nh.advertise<place_recognizer::keyframeMatchInfo>("matchInfo",1);
+  pub_match = nh.advertise<coslam_msgs::keyframeMatchInfo>("matchInfo",1);
   valid = false; // Make true at the end of the constructor
   //static const std::string basePath = "/home/alphabot/stage_ws/src/place_recognizer/"; // Base path (Change to relative path)
   basePath = ros::package::getPath("place_recognizer")+"/"; 
   
   //Load vocabulary, training data and Chow-Liu tree path
-  std::string vocabPath = (basePath + "data/StLuciaShortVocabulary.yml").c_str();
-  std::string fabmapTrainDataPath = (basePath + "data/StLuciaShortTraindata.yml").c_str();
-  std::string chowliutreePath = (basePath + "data/StLuciaShortTree.yml").c_str();
+  std::string vocabPath = (basePath + "data/R02/vocab.yml").c_str();
+  std::string fabmapTrainDataPath = (basePath + "data/R02/trainbows.yml").c_str();
+  std::string chowliutreePath = (basePath + "data/R02/clTree.yml").c_str();
 
   // Load vocabulary
   cv::FileStorage fsVocabulary;
@@ -34,7 +36,7 @@ PRfabmap::PRfabmap()
   cv::FileStorage fsTraining;
   fsTraining.open(fabmapTrainDataPath, cv::FileStorage::READ);
   cv::Mat fabmapTrainData;
-  fsTraining["BOWImageDescs"] >> fabmapTrainData;
+  fsTraining["Trainbows"] >> fabmapTrainData;
   if (fabmapTrainData.empty()) {
     std::cerr << fabmapTrainDataPath << ": FabMap Training Data not found" << std::endl;
     return;
@@ -45,7 +47,7 @@ PRfabmap::PRfabmap()
   cv::FileStorage fsTree;
   fsTree.open(chowliutreePath, cv::FileStorage::READ);
   cv::Mat clTree;
-  fsTree["ChowLiuTree"] >> clTree;
+  fsTree["Tree"] >> clTree;
   if (clTree.empty()) {
     std::cerr << chowliutreePath << ": Chow-Liu tree not found" << std::endl;
     return;
@@ -57,15 +59,21 @@ PRfabmap::PRfabmap()
   int options = 0;
   options |= cv::of2::FabMap::SAMPLED;
   options |= cv::of2::FabMap::CHOW_LIU;
-  fabMap = new cv::of2::FabMap2(clTree, 0.39, 0, options);
+  double PzGe = 0.39; // Detector Model Recall : Prob that feature detector extracting a feature is actually present in the scene.
+  double PzGNe = 0.0; // Detector Model Precision : Prob that feature detector extracts a feature which is not present in the scene.
+  fabMap = new cv::of2::FabMap2(clTree, PzGe, PzGNe, options);
   fabMap->addTraining(fabmapTrainData); //add the training data for use with the sampling method
   
   // Create detector & extractor
-  int minHessian = 400;
-  detector =  new cv::SurfFeatureDetector( minHessian );
-  //detector = new cv::StarFeatureDetector(32, 10, 18, 18, 20); // alternative detector
- 
-  extractor = new cv::SURF(1000, 4, 2, false, true); // alternative:  cv::SIFT();
+  double minHessian = 300.0; int nOctaves = 4; int nOctaveLayers = 2; // Default: Hessian = 400, nOctaves = 4, nOctaveLayers = 2
+  detector =  new cv::SurfFeatureDetector( minHessian,
+					   nOctaves,
+					   nOctaveLayers,
+					   false, //64/128D
+					   true); // Oriented/Upright
+
+  
+  extractor = new cv::SURF(minHessian, nOctaves, nOctaveLayers, false, true); 
   //use a FLANN matcher to generate bag-of-words representations
   matcher = cv::DescriptorMatcher::create("FlannBased"); // alternative: "BruteForce"
   bide = new cv::BOWImgDescriptorExtractor(extractor, matcher);
@@ -75,13 +83,15 @@ PRfabmap::PRfabmap()
   // confusionMat = cv::Mat(0, 0, CV_32F);
 
   // Set Matching threshold
-  matchThresh = 0.8;
+  matchThresh = 0.9;
   
   // Fabmap initialized properly
   valid = true; 
+    
+  // Debug Variables
+  debug_count1 = 0;
   
 }
-
 
 // Need to change this 
 PRfabmap::~PRfabmap()
@@ -102,6 +112,7 @@ PRfabmap::~PRfabmap()
  
 }
 
+// Place Recognition Related
 void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camId)
 {
   // Convert image to cv::Mat using cv_bridge
@@ -226,6 +237,42 @@ void PRfabmap::addNewKeyframeBOW(place_recognizer::keyframeImg& kf_msg, int camI
 
 }
 
+
+void PRfabmap::addNewKeyframeBOW(cv::Mat& frame ,int fId, int camId)
+{
+  
+  // Compute BOW 
+  // 1) Detect Features (parameters in the constructor)
+  std::vector<cv::KeyPoint> kpts;
+  detector->detect(frame, kpts);
+     
+  // 2) Compute BOW description of the image
+  cv::Mat bow_frame;
+  if(camId==1){
+    
+    bide->compute(frame, kpts, bow_frame);
+    bow1.push_back(bow_frame);
+    fId1.push_back(fId);
+    
+    // Store keypoints from each frame
+    kptsVec1.push_back(kpts);
+  
+   }
+  
+   else if(camId==2)
+   {
+   
+    bide->compute(frame, kpts, bow_frame);
+    bow2.push_back(bow_frame);
+    fId2.push_back(fId);
+    
+    // Store keypoints from each frame
+    kptsVec2.push_back(kpts);
+  }
+
+}
+
+
 void PRfabmap::computeKeyPointLocs(std::vector<cv::KeyPoint>& kpts, cv::Mat& p2d)
 { 
   int nPts = kpts.size();
@@ -290,7 +337,6 @@ void PRfabmap::computeKeyPoint3d(cv::Mat& dMap, cv::Mat& p2d,cv::Mat& p3d, int c
  
 }
 
-
 void PRfabmap::compareKeyframeBOW(cv::Mat bow, int camId)
 { 
   // Run FabMap
@@ -339,8 +385,8 @@ void PRfabmap::compareKeyframeBOW(cv::Mat bow, int camId)
 	 }
 	 
 	 pub_match.publish(msg);
-	 
-	 
+	 ROS_INFO("publishing match");
+	
 	 
 	 
 	 // Compute 3d Sim Transformation
@@ -375,6 +421,76 @@ void PRfabmap::compareKeyframeBOW(cv::Mat bow, int camId)
  
 }
 
+void PRfabmap::compareKeyframeBOW(int camId) //camId of current frame
+{
+  // Compare last frame from current keyframe to all other keyframes of the other cam
+  std::vector<cv::of2::IMatch> matches;
+  std::vector<int> matchesIdx;
+  std::vector<double> matchesScore;
+  std::vector<cv::of2::IMatch>::iterator l;
+  
+  
+  if(camId == 1)
+  {
+    if(!bow2.empty())
+     { // compare(query_img, test_img, match)
+      std::cout<<"Comparing frame = "<< fId1.back()<< " ,Cam1 with Cam 2"<<std::endl;
+      fabMap->compare(bow1.row(bow1.rows-1), bow2, matches);
+     
+      for(l= matches.begin(); l!=matches.end(); l++)
+      {
+	std::cout << "Query Id =" << l->queryIdx << ", Img Id = " << l->imgIdx << ", Matching Score =" << l->match << std::endl;
+	if(l->queryIdx!=-1 && l->match > matchThresh)
+	{
+	   matchesIdx.push_back(l->imgIdx);
+	   matchesScore.push_back(l->match);
+	}
+	
+      }
+      
+     // Consider the best match only
+     if(!matchesScore.empty())
+     {
+	double bestVal = -1.0;
+	int bestPos = -1;
+        for(int i = 0; i < matchesScore.size(); i++)
+	{
+	  if(matchesScore.at(i) > bestVal)
+	  { 
+	    bestVal = matchesScore.at(i);
+	    bestPos = i; 
+	  }
+	  
+	}  
+       
+       std::cout<<"Found Match Between Cam 1: "<< fId1.back() <<" and Cam2: "<< fId2.at(bestPos) << "With Matching score ="<< bestVal <<std::endl; 
+    
+       
+    } 
+     
+   
+      
+    }
+    
+  }
+  else if(camId == 2)
+  {
+    
+   if(!bow1.empty())
+    { 
+   
+      std::cout<<"Comparing frame = "<< fId2.back()<< " ,Cam 2 with Cam 1"<<std::endl;
+      fabMap->compare(bow2.row(bow2.rows-1), bow1, matches);
+      
+         
+      
+    }
+      
+  }
+  
+  
+}
+
 void PRfabmap::publishMatchInfo(cv::Mat matchMat, int camId, int fId)
 {
   std::cout<<"publishMatchInfo"<<std::endl;  
@@ -404,47 +520,154 @@ void PRfabmap::publishMatchInfo(cv::Mat matchMat, int camId, int fId)
   
 }
 
-void PRfabmap::kfCb1(const place_recognizer::keyframeImg::ConstPtr& fmsg)
+
+
+
+void PRfabmap::kfCb(lsd_slam_viewer::keyframeMsgConstPtr msg)
 {
-  int camId = 1;
-  ROS_INFO("Image Callback Function 1 : Reading Image Number = %d", fmsg->id);
+  ROS_INFO(" Reading keyframe  = %d , from Camera = %d", msg->id, msg->camId);
+  #define SAVE_KEYFRAMES
   
-  // Get camera parameters
-  fx1 = fmsg->fx;
-  fy1 = fmsg->fy;
-  cx1 = fmsg->cx;
-  cy1 = fmsg->cy;
-  height1 = fmsg->height;
-  width1 = fmsg->width;
-  
-  // Add new keyframe
-  place_recognizer::keyframeImg kf_msg;
-  kf_msg = *fmsg;
-  addNewKeyframeBOW(kf_msg, camId);
-  
+  int id = msg->id;
+  int camId = msg->camId; 
+  double timestamp = msg->time;
+  int w = msg->width;
+  int h = msg->height;
+  float fx = msg->fx;
+  float fy = msg->fy;
+  float cx = msg->cx;
+  float cy = msg->cy;     
+  Sophus::Matrix3f K_sophus;
+  K_sophus << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
  
+  //  Read pointcloud data (image, idepth, idepth_var)
+  InputPointDense* pc = (InputPointDense*)msg->pointcloud.data();
+  cv::Mat image = cv::Mat(h,w,CV_8U);
+  cv::Mat idepth = cv::Mat(h,w,CV_32F);
+  cv::Mat idepth_var = cv::Mat(h,w,CV_32F);
+     
+  for(int i =0; i<h; i++) // For each row
+  {
+    uchar* data_img = image.ptr<uchar>(i);
+    float* data_idepth = idepth.ptr<float>(i);
+    float* data_idepth_var = idepth_var.ptr<float>(i);
+       
+       for(int j = 0; j<w ; j++) // for each column
+	{
+	  data_img[j] = pc->color[0];
+	  data_idepth[j] = pc->idepth;
+	  data_idepth_var[j] = pc->idepth_var;
+	  pc++;
+	}
+  }
+  
+  // Compute BOW description for the image and store it  
+  addNewKeyframeBOW(image,id,camId);
+  // Compare current image descriptor to all other image descriptors of the other camera
+  compareKeyframeBOW(camId);
+  
+  // Debugging Space
+#ifdef DEBUG_KEYFRAMES
+   cv::imshow("Image", image);
+   cv::imshow("IDepth", idepth);
+   cv::waitKey(5);
+#endif  
+  
+
+#ifdef SAVE_KEYFRAMES 
+  if(debug_count1 == 3 || debug_count1 == 4)
+  {
+    saveKFImage(image,idepth,camId, id);
+  }
+  debug_count1++;
+#endif 
+  
 }
 
-void PRfabmap::kfCb2(const place_recognizer::keyframeImg::ConstPtr& fmsg)
-{
-  int camId = 2;
-  ROS_INFO("Image Callback Function 2 : Reading Image Number = %d", fmsg->id);
 
-  // Add new keyframe
-  place_recognizer::keyframeImg kf_msg;
-  kf_msg = *fmsg;
-  addNewKeyframeBOW(kf_msg, camId); 
- 
-}  
+
+
+
 
 bool PRfabmap::isValid() const
 {
   return valid;
 }
 
+//-------------------------------------------- Sim3 Estimation Related ------------------------------------------------------//
 
 
-/*
+
+
+
+//--------------------------------------------- Debugging Related-----------------------------------------------------------// 
+
+void PRfabmap::publishMatchInfoDebug()
+{
+  std::cout<<"Publish Match Info (Dummy)"<<std::endl;  
+  place_recognizer::keyframeMatchInfo msg;
+  
+  msg.isMatch = true;
+  msg.iCam = 1;
+  msg.kfId1 = 5; 
+  msg.kfId2 = 10;
+  
+  Sophus::Sim3f BtoA;
+  memcpy(msg.BtoA.data() ,BtoA.cast<float>().data(),sizeof(float)*7);
+  pub_match.publish(msg);
+  ros::Rate loop_rate(1);
+  loop_rate.sleep();
+  
+}
+
+void PRfabmap::saveKFImage(cv::Mat& image, cv::Mat& idepth, int camId, int fId)
+{
+    cv::Mat depth(idepth.rows, idepth.cols, idepth.type());
+  
+    for(int i =0; i<idepth.rows; i++) // For each row
+    {
+       float* data_idepth = idepth.ptr<float>(i);
+       float* data_depth =  depth.ptr<float>(i);
+       
+       for(int j = 0; j< idepth.cols ; j++) // for each column
+	{
+	    if(data_idepth[j] == -1 )
+	      data_depth[j] = -1;
+	    else
+	      data_depth[j] =  1/data_idepth[j];
+	}
+     }
+ 
+    
+   std::cout<<"Saving Image from Camera :"<< camId << " , Frame id = "<< fId << std::endl;
+   std::string img_filename, dep_filename, idep_filename, depth_mat_filename;
+     
+   std::ostringstream convert;
+   convert << camId << "_" << fId ;
+   img_filename = ("img" +  convert.str() + ".png").c_str();
+   idep_filename = ("idep" +  convert.str() + ".png").c_str();
+   dep_filename = ("dep" +  convert.str() + ".png").c_str();
+   depth_mat_filename = ("depth_mat" +  convert.str() + ".xml").c_str();
+  
+   cv::FileStorage fs(depth_mat_filename,cv::FileStorage::WRITE);
+   fs << "Depth"<< depth;
+   fs.release();
+   
+   cv::imwrite(img_filename,image);
+   //cv::imwrite(dep_filename,depth);
+   //cv::imwrite(idep_filename,depth);
+    
+   cv::imshow("Image", image);
+   cv::imshow("Depth",  depth);
+   cv::imshow("IDepth", idepth);
+   cv::waitKey(10);
+ 
+    
+}
+
+
+
+/* Debug Confusion Matrix
 void PRfabmap::computeConfusionMat()
 {
   std::vector<cv::of2::IMatch>::iterator l;
@@ -460,5 +683,3 @@ void PRfabmap::computeConfusionMat()
   
 }
 */
-
-

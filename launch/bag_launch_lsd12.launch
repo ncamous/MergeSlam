@@ -1,0 +1,22 @@
+<launch>  
+  	<node pkg="rosbag" type="play" name="player1"  args="/home/nicole/datasets/lsd1_loop_big_square1_2016-03-23-13-15-37.bag">
+		<!--<remap from="imageRectified" to="lsd1/imageRectified" />
+	    	<remap from="camInfo" to="lsd1/camInfo" />
+	    	<remap from="camera/image_raw" to="lsd1/camera/image_raw" />
+	    	<remap from="imageRectified" to="lsd1/imageRectified" />-->
+	</node> 
+
+   <!--<node name="imageRectified1" pkg="image_view" type="image_view" respawn="true" output="screen" >
+      <remap from="image" to="lsd1/imageRectified" />
+    </node>-->
+
+ 	<node pkg="rosbag" type="play" name="player2"  args="/home/nicole/datasets/lsd2_bigsqaure_2016-03-11-09-11-07.bag">
+<!--		<remap from="imageRectified" to="lsd2/imageRectified" />
+	    	<remap from="camInfo" to="lsd2/camInfo" />
+	    	<remap from="camera/image_raw" to="lsd2/camera/image_raw" />
+	    	<remap from="imageRectified" to="lsd2/imageRectified" />-->
+	</node> 
+
+
+</launch>
+

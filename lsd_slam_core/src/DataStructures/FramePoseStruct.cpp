@@ -66,6 +66,21 @@ void FramePoseStruct::setPoseGraphOptResult(Sim3 camToWorld)
 	hasUnmergedPose = true;
 }
 
+void FramePoseStruct::setPoseExternal(Sim3 camToWorld_ext)
+{
+	camToWorld = camToWorld_ext;
+	isOptimized = true;
+	hasUnmergedPose = false;
+}
+
+
+Sim3 FramePoseStruct::getCamToWorld_ext(int recursionDepth)
+{
+	return camToWorld;
+
+}
+
+
 void FramePoseStruct::applyPoseGraphOptResult()
 {
 	if(!hasUnmergedPose)

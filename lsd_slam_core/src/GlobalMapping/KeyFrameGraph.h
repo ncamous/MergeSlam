@@ -87,7 +87,8 @@ struct KFConstraintStruct
  */
 class KeyFrameGraph
 {
-friend class IntegrationTest;
+friend class IntegrationTest; 
+friend class MergeSystem;
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -145,7 +146,7 @@ public:
 	boost::shared_mutex keyframesAllMutex;
 	std::vector< Frame*, Eigen::aligned_allocator<Frame*> > keyframesAll;
 
-
+	//make a copy of it to use it because mutex protects 	
 	/** Maps frame ids to keyframes. Contains ALL Keyframes allocated, including the one that currently being created. */
 	/* this is where the shared pointers of Keyframe Frames are kept, so they are not deleted ever */
 	boost::shared_mutex idToKeyFrameMutex;

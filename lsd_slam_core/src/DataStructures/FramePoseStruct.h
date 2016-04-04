@@ -62,6 +62,10 @@ public:
 	void applyPoseGraphOptResult();
 	Sim3 getCamToWorld(int recursionDepth = 0);
 	void invalidateCache();
+	
+	// Sets Pose Externally (By Force): Used to set the pose of the frame from the output of lsd-slam[*Added*]
+	void setPoseExternal(Sim3 camToWorld_ext);
+	Sim3 getCamToWorld_ext(int recursionDepth=0);
 private:
 	int cacheValidFor;
 	static int cacheValidCounter;

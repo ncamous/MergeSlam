@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(place_recognizer)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/thirdparty/Sophus)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -9,12 +11,15 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
+  coslam_msgs
   cv_bridge
   message_generation
   roslib
 )
 find_package(cmake_modules REQUIRED)
 find_package( OpenCV REQUIRED)
+find_package(Eigen REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,6 +107,8 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+   ${EIGEN_INCLUDE_DIR}
+  ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
 )
 
 ## Declare a cpp library

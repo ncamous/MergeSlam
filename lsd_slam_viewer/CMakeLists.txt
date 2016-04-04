@@ -78,6 +78,15 @@ target_link_libraries(viewer ${QGLViewer_LIBRARIES}
 			     GL glut GLU
 		     )
 
+add_executable(viewer_coslam src/main_viewer_coslam.cpp  src/CoslamViewer.cpp ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(viewer_coslam ${QGLViewer_LIBRARIES}
+           ${QGLVIEWER_LIBRARY} 
+           ${catkin_LIBRARIES}
+           ${Boost_LIBRARIES}
+           ${QT_LIBRARIES}
+           GL glut GLU
+         )
+
 #add_executable(videoStitch src/main_stitchVideos.cpp)
 #target_link_libraries(viewer ${QGLViewer_LIBRARIES}
 #			     ${QGLVIEWER_LIBRARY}

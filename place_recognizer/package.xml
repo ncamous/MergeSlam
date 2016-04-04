@@ -47,12 +47,17 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>coslam_msgs</build_depend>
+  <build_depend>lsd_slam_viewer</build_depend>
+
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>cv_bridge</run_depend>
-  
+  <run_depend>coslam_msgs</run_depend>
+  <build_depend>lsd_slam_viewer</build_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- You can specify that this package is a metapackage here: -->
